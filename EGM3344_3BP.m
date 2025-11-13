@@ -1,4 +1,4 @@
-function dydt = threeBodyODE_simple(t, y)
+function dydt = threeBodyODE(t,y)
 % threeBodyODE_simple - explicit 3-body ODE system for use with myODE45
 %
 % y = [x1 y1 z1 vx1 vy1 vz1 x2 y2 z2 vx2 vy2 vz2 x3 y3 z3 vx3 vy3 vz3]'
@@ -37,14 +37,18 @@ function dydt = threeBodyODE_simple(t, y)
         vx3; vy3; vz3; a3(1); a3(2); a3(3) ];
 end
 
-function [t, y] = myODE45(f, tspan, y0, tol)
+function [t, r1,r2,r3] = myODE45(tspan, y0, f, tol)
     % myODE45: simple implementation of Runge–Kutta–Fehlberg 4(5)
     % f: function handle @(t,y)
     % tspan: [t0 tf]
     % y0: initial value (scalar or vector)
     % tol: error tolerance
 
-    if nargin < 4
+    
+    if nargin < 3 %default ODE builder
+        f = @threeBodyODE;
+        tol = 1e-6;
+    elseif nargin < 4
         tol = 1e-6;  % default tolerance
     end
 
@@ -65,9 +69,9 @@ function [t, y] = myODE45(f, tspan, y0, tol)
     b4 = a(7,:);  % 4th order
     b5 = [5179/57600, 0, 7571/16695, 393/640, -92097/339200, 187/2100, 1/40]; % 5th order
     t = t0;
-    y = y0(:)';  % store row-wise
+    y = y0(:);  % store row-wise
     ti = t0;
-    yi = y0(:)';
+    yi = y0(:);
 
     while t(end) < tf
         if t(end) + h > tf
@@ -92,7 +96,7 @@ function [t, y] = myODE45(f, tspan, y0, tol)
             ti = ti + h;
             yi = y5;
             t(end+1,1) = ti;
-            y(end+1,:) = yi;
+            y = [y yi];
         end
 
         % Update step size (safety factor 0.9)
@@ -103,36 +107,38 @@ function [t, y] = myODE45(f, tspan, y0, tol)
         end
         h = h * min(max(s, 0.2), 5);
     end
+    r1 = y(1:3,:)';
+    r2 = y(7:9,:)';
+    r3 = y(13:15,:)';
 end
 
 
 
-% Initial setup
-r1 = [-1, 0, 0];
-v1 = [0, 0.3, 0];
-r2 = [1, 0, 0];
-v2 = [0, -0.3, 0];
-r3 = [0, 1, 0];
-v3 = [-0.3, 0, 0];
+% Test case
+%{
+r1 = [-1e6, 5e2, 3e8];
+v1 = [4e3, 7e9, -3e6];
+r2 = [1e6, -5e2, -3e8];
+v2 = [-4e3, -7e9, 1e4];
+r3 = [1e4, -5e4, 3e7];
+v3 = [4e3, 7e9, -3e6];
 
-y0 = [r1, v1, r2, v2, r3, v3];  % pack into one row
-tspan = [0 30];
+y0 = [r1, v1, r2, v2, r3, v3];  % pass in vals as row vectors
+tspan = [0 5]; %initial and final time value
+%}
 
-% Integrate using your custom solver
-[t, y] = myODE45(@threeBodyODE_simple, tspan, y0);
+% RK45 call
+[t, r1, r2, r3] = myODE45(tspan, y0);
+%^^^^^^
+% Pass in t as a two element row vector [t initial, t final
+% Pass y0 as an 6 element row vector [position body 1, velocity body 1, 
+% position body 2, velocity body 2, position body 3, velocity body 3] with
+% each position/velocity inputted as row vector [x0,y0,z0]
 
-% Extract trajectories
-r1 = y(:,1:3);
-r2 = y(:,7:9);
-r3 = y(:,13:15);
 
-% Plot results
-figure;
-plot3(r1(:,1), r1(:,2), r1(:,3), 'r', 'LineWidth', 1.5); hold on;
-plot3(r2(:,1), r2(:,2), r2(:,3), 'b', 'LineWidth', 1.5);
-plot3(r3(:,1), r3(:,2), r3(:,3), 'g', 'LineWidth', 1.5);
-xlabel('x'); ylabel('y'); zlabel('z');
-legend('Body 1', 'Body 2', 'Body 3');
-axis equal; grid on;
-title('Three-Body Problem (myODE45)');
+
+
+
+
+
 
