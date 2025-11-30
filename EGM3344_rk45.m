@@ -1,10 +1,10 @@
-function dydt = threeBodyODE(t,y,m)
+function dydt = threeBodyODE(t,y)
 % threeBodyODE_simple - explicit 3-body ODE system for use with myODE45
 %
 % y = [x1 y1 z1 vx1 vy1 vz1 x2 y2 z2 vx2 vy2 vz2 x3 y3 z3 vx3 vy3 vz3]'
 
-    G = 1;            % gravitational constant (can be scaled)
-    m1=m(1); m2 = m(2);  m3 = m(3); %masses
+    G = 6.674e-11;           % gravitational constant (can be scaled)
+    m1=1; m2 = 1;  m3 = 1; %masses
 
     % Extract positions and velocities
     x1 = y(1);  y1 = y(2);  z1 = y(3);
@@ -116,15 +116,15 @@ end
 
 % Test case
 %{
-r1 = [-1e6, 5e2, 3e8];
-v1 = [4e3, 7e9, -3e6];
-r2 = [1e6, -5e2, -3e8];
-v2 = [-4e3, -7e9, 1e4];
-r3 = [1e4, -5e4, 3e7];
-v3 = [4e3, 7e9, -3e6];
+r1 = [1,0,0];
+v1 = [0,0,0];
+r2 = [0,1,0];
+v2 = [0,0,0];
+r3 = [0,0,1];
+v3 = [0,0,0];
 
 y0 = [r1, v1, r2, v2, r3, v3];  % pass in vals as row vectors
-tspan = [0 5]; %initial and final time value
+tspan = [0 259200/2]; %initial and final time value
 %}
 
 % RK45 call
